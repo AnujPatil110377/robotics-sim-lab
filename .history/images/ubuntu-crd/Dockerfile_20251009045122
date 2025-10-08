@@ -1,0 +1,57 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=Etc/UTC \
+    CRD_USER=crduser \
+    CRD_PASSWORD=123456 \
+    CRD_CODE="" \
+    CRD_EMAIL="" \
+    CRD_HOSTNAME="Docker-CRD"
+
+# Install base packages, Xfce, Google Chrome, and Chrome Remote Desktop
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      dbus \
+      dbus-x11 \
+      fonts-liberation \
+      gnupg \
+      locales \
+      pulseaudio \
+      sudo \
+      unzip \
+      wget \
+      xbase-clients \
+      xfce4 \
+      xfce4-goodies && \
+    rm -rf /var/lib/apt/lists/*
+
+# Add Google Chrome repo
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list
+
+# Download CRD deb ahead of time to reduce startup failures
+RUN wget -O /tmp/chrome-remote-desktop.deb https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends google-chrome-stable && \
+    apt-get install -y --no-install-recommends /tmp/chrome-remote-desktop.deb && \
+    rm -rf /var/lib/apt/lists/* /tmp/*.deb
+
+# Create default user and prepare session file
+RUN useradd -m -s /bin/bash ${CRD_USER} && \
+    echo "${CRD_USER}:${CRD_PASSWORD}" | chpasswd && \
+    usermod -aG chrome-remote-desktop ${CRD_USER} && \
+    usermod -aG sudo ${CRD_USER} && \
+    echo "${CRD_USER} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${CRD_USER} && \
+    mkdir -p /home/${CRD_USER}/.config && \
+    echo "exec /usr/bin/xfce4-session" > /home/${CRD_USER}/.chrome-remote-desktop-session && \
+    chown -R ${CRD_USER}:${CRD_USER} /home/${CRD_USER}
+
+COPY start-crd.sh /usr/local/bin/start-crd.sh
+RUN chmod +x /usr/local/bin/start-crd.sh
+
+EXPOSE 443
+
+CMD ["/usr/local/bin/start-crd.sh"]
