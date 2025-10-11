@@ -51,9 +51,9 @@ Provide the image name in the UI (or API) and include CRD credentials:
 }
 ```
 
-Optional environment overrides (set in the API payload `env` array or by customizing the image):
+- Optional environment overrides (set in the API payload `env` array or by customizing the image):
 
-- `CRD_PASSWORD` – 6+ digit PIN used when the host registers (default `123456`)
+- `CRD_PASSWORD` – 6+ digit PIN used when the host registers. This value is NOT baked into the image; it must be provided at container runtime (for example via the UI form or via the API). The API will apply the PIN inside the running container rather than storing it in the image.
 - `CRD_HOSTNAME` – name shown in Chrome Remote Desktop (default `Docker-CRD`)
 - `CRD_USER` – Linux username created inside the container (`crduser` by default)
 

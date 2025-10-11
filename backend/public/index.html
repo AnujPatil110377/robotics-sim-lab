@@ -20,8 +20,11 @@
     <input name="cpu" value="1" placeholder="cpu (cores)" />
     <input name="ramMb" value="1024" placeholder="ramMb" />
     <input name="name" placeholder="name (optional)" />
-    <input name="crdEmail" placeholder="CRD email (optional)" />
-    <input name="crdCode" placeholder="CRD auth code (optional)" />
+  <input name="crdEmail" placeholder="CRD email (optional)" />
+  <input name="crdCode" placeholder="CRD auth code (optional)" />
+  <!-- PIN input: use password type + numeric inputmode and validation (at least 6 digits) -->
+  <input type="password" name="crdPassword" placeholder="CRD PIN (optional, 6 digits)" inputmode="numeric" pattern="\\d{6,}" minlength="6" />
+    <!-- GPU selection removed: the provisioner does not enforce or assign GPUs -->
     <button type="submit">Create</button>
   </form>
 
@@ -88,13 +91,24 @@
   if (data.internalPort === undefined) delete data.internalPort;
       const crdEmail = (data.crdEmail || '').trim();
       const crdCode = (data.crdCode || '').trim();
+      const crdPassword = (data.crdPassword || '').trim();
+
+      // Basic client-side validation: if a PIN is provided it must be numeric and at least 6 digits.
+      if (crdPassword && !/^\d{6,}$/.test(crdPassword)) {
+        alert('CRD PIN must be numeric and at least 6 digits long');
+        return;
+      }
+
       delete data.crdEmail;
       delete data.crdCode;
-      if (crdEmail || crdCode) {
+      delete data.crdPassword;
+      if (crdEmail || crdCode || crdPassword) {
         data.crd = {};
         if (crdEmail) data.crd.email = crdEmail;
         if (crdCode) data.crd.code = crdCode;
+        if (crdPassword) data.crd.password = crdPassword;
       }
+      if (!data.gpu || data.gpu.trim() === '') delete data.gpu; // omit if not set
       const res = await fetch(api + '/instances', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
