@@ -4,50 +4,165 @@
   <meta charset="utf-8" />
   <title>Desktop Provisioner</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; }
-    form, table { margin-top: 16px; }
-    input, select, button { padding: 8px; margin: 4px; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    button { cursor: pointer; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f6fb;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 32px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      padding: 32px 40px 40px 40px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      margin-bottom: 24px;
+    }
+    form input {
+      flex: 1 1 180px;
+      padding: 10px;
+      border: 1px solid #cfd8dc;
+      border-radius: 6px;
+      font-size: 1em;
+      background: #fff;
+      transition: border-color 0.2s;
+    }
+    form input:focus {
+      border-color: #1976d2;
+      outline: none;
+    }
+    form button {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 24px;
+      font-size: 1em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    form button:hover {
+      background: #1565c0;
+    }
+    .tip {
+      font-size: 0.95em;
+      color: #555;
+      margin-bottom: 24px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    th {
+      background: #1976d2;
+      color: #fff;
+      font-weight: 600;
+      padding: 12px 8px;
+      border: none;
+    }
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: center;
+    }
+    tr:hover td {
+      background: #e3f2fd;
+    }
+    .actions button {
+      background: #e53935;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 14px;
+      margin: 0 2px;
+      cursor: pointer;
+      font-size: 0.95em;
+      transition: background 0.2s;
+    }
+    .actions button:hover {
+      background: #b71c1c;
+    }
+    footer {
+      text-align: center;
+      color: #888;
+      margin-top: 40px;
+      font-size: 0.95em;
+    }
+    .feedback {
+      text-align: center;
+      margin-bottom: 18px;
+      font-size: 1em;
+      color: #388e3c;
+      display: none;
+    }
+    @media (max-width: 700px) {
+      .container { padding: 12px; }
+      form { flex-direction: column; gap: 8px; }
+      th, td { font-size: 0.95em; }
+    }
   </style>
 </head>
 <body>
-  <h2>Create Desktop</h2>
-  <form id="f">
-    <input name="image" value="accetto/ubuntu-vnc-xfce" placeholder="image" />
-    <input name="internalPort" value="6901" placeholder="internalPort" />
-    <input name="cpu" value="1" placeholder="cpu (cores)" />
-    <input name="ramMb" value="1024" placeholder="ramMb" />
-    <input name="name" placeholder="name (optional)" />
-  <input name="crdEmail" placeholder="CRD email (optional)" />
-  <input name="crdCode" placeholder="CRD auth code (optional)" />
-  <!-- PIN input: use password type + numeric inputmode and validation (at least 6 digits) -->
-  <input type="password" name="crdPassword" placeholder="CRD PIN (optional, 6 digits)" inputmode="numeric" pattern="\\d{6,}" minlength="6" />
-    <!-- GPU selection removed: the provisioner does not enforce or assign GPUs -->
-    <button type="submit">Create</button>
-  </form>
 
-  <p style="font-size: 0.9em; color: #444;">
-    Tip: Generate Chrome Remote Desktop credentials at
-    <a href="https://remotedesktop.google.com/headless" target="_blank" rel="noopener noreferrer">remotedesktop.google.com/headless</a>.
-    Provide the CRD email and auth code to register the container automatically.
-  </p>
-
-  <h2>Instances</h2>
-  <table id="t">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Image</th>
-        <th>State</th>
-  <th>Access</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="container">
+    <header>
+      <h1>Desktop Provisioner Portal</h1>
+      <div style="color:#1976d2;font-size:1.1em;font-weight:500;">Create and manage your desktop containers easily</div>
+    </header>
+    <div class="feedback" id="feedback"></div>
+    <form id="f">
+      <input name="image" value="accetto/ubuntu-vnc-xfce" placeholder="Image (e.g. accetto/ubuntu-vnc-xfce)" />
+      <input name="internalPort" value="6901" placeholder="Internal Port" />
+      <input name="cpu" value="1" placeholder="CPU (cores)" />
+      <input name="ramMb" value="1024" placeholder="RAM (MB)" />
+      <input name="name" placeholder="Name (optional)" />
+      <input name="crdEmail" placeholder="CRD Email (optional)" />
+      <input name="crdCode" placeholder="CRD Auth Code (optional)" />
+      <input type="password" name="crdPassword" placeholder="CRD PIN (optional, 6 digits)" inputmode="numeric" pattern="\d{6,}" minlength="6" />
+      <button type="submit">Create</button>
+    </form>
+    <div class="tip">
+      Tip: Generate Chrome Remote Desktop credentials at
+      <a href="https://remotedesktop.google.com/headless" target="_blank" rel="noopener noreferrer">remotedesktop.google.com/headless</a>.
+      Provide the CRD email and auth code to register the container automatically.
+    </div>
+    <h2 style="margin-top:32px;">Instances</h2>
+    <table id="t">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Image</th>
+          <th>State</th>
+          <th>Access</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <footer>
+      &copy; 2025 Desktop Provisioner Portal. All rights reserved.
+    </footer>
+  </div>
 
   <script>
     const api = location.origin.replace(/\/$/, '').replace(/:\d+$/, '') + ':3001';
