@@ -1,20 +1,23 @@
-# Use official Node.js image
+# Use the official Node.js 18 image as the base
 FROM node:18
 
-# Set working directory
-WORKDIR /app
+# Application code lives in /app/backend
+WORKDIR /app/backend
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy only dependency manifests first; improves layer caching!
+COPY backend/package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install only production dependencies
+RUN npm install --production
 
-# Copy the rest of the code
-COPY . .
+# Copy the rest of your app code
+COPY backend/ .
 
-# Expose the port your app runs on
+# Copy static files for your portal UI (if not already included in previous copy)
+COPY backend/public ./public
+
+# Expose the backend API port
 EXPOSE 3001
 
-# Start the server
+# Start the backend service
 CMD ["node", "index.js"]
