@@ -1,0 +1,36 @@
+# Ignore Git files
+.git
+.gitignore
+*.log
+**/__pycache__/
+**/.DS_Store
+
+# Ignore build artifacts
+*.out
+*.o
+*.a
+*.so
+*.exe
+*.class
+*.jar
+
+# Ignore temporary files and OS junk
+*.swp
+*.tmp
+Thumbs.db
+
+# Ignore Node.js / Python / VSCode stuff
+node_modules
+venv
+.vscode
+.idea
+__pycache__/
+*.pyc
+
+# Ignore Docker context itself
+Dockerfile
+Dockerfile.*
+.dockerignore
+
+# Ignore anything not required for build
+README.md

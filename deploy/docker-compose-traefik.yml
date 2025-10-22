@@ -1,30 +1,54 @@
+version: '3.8'
+
+networks:
+  rdpnet:
+    name: rdpnet
+    driver: bridge
+
 services:
+
   traefik:
     image: traefik:v2.11
     command:
-      - --api=false
+      - --entrypoints.web.address=:80
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
+      - --providers.docker.network=rdpnet
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --log.level=DEBUG
+      - --accesslog=true
     ports:
       - "80:80"
+      - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - rdpnet
     restart: unless-stopped
+
   backend:
-    build: ../backend
-    ports:
-      - "3001:3001"
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    image: deploy-backend
+    environment:
+      - USE_TRAEFIK=1
+      - DOCKER_NETWORK=rdpnet
+      - PORT=3001
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=PathPrefix(`/`)"
-      - "traefik.http.services.backend.loadbalancer.server.port=3001"
-      - "traefik.http.routers.backend.middlewares=cors@docker"
-      - "traefik.http.middlewares.cors.headers.accessControlAllowOrigin=*"
-      - "traefik.http.middlewares.cors.headers.accessControlAllowMethods=GET,OPTIONS,PUT,POST,DELETE"
-      - "traefik.http.middlewares.cors.headers.accessControlAllowHeaders=*"
-      - "traefik.http.middlewares.cors.headers.accessControlMaxAge=100"
-      - "traefik.http.middlewares.cors.headers.addVaryHeader=true"
+      - traefik.enable=true
+      - traefik.http.routers.portal.entrypoints=web
+      - traefik.http.routers.portal.rule=PathPrefix(/)
+      - traefik.http.routers.portal.service=portal
+      - traefik.http.services.portal.loadbalancer.server.port=3001
+      - traefik.docker.network=rdpnet
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "3001:3001"   # Optional for direct API access
+    networks:
+      - rdpnet
+    depends_on:
+      - traefik
     restart: unless-stopped
