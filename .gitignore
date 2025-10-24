@@ -1,6 +1,8 @@
 # Node modules
 node_modules/
 backend/node_modules/
+Admin Dashboard UI Design/node_modules/
+Admin Dashboard UI Design/build/
 
 # Logs
 logs/

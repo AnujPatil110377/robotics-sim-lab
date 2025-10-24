@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   rdpnet:
     name: rdpnet
@@ -39,12 +37,15 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.portal.entrypoints=web
-      - traefik.http.routers.portal.rule=PathPrefix(/)
+      - traefik.http.routers.portal.rule=PathPrefix(`/`)
       - traefik.http.routers.portal.service=portal
       - traefik.http.services.portal.loadbalancer.server.port=3001
       - traefik.docker.network=rdpnet
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      # If you build the frontend locally, mount the build output so Traefik serves the new UI
+      # The compose file lives in deploy/, so the repo-root frontend build is ../<folder>/build
+      - ../Admin Dashboard UI Design/build:/app/backend/public:ro
     ports:
       - "3001:3001"   # Optional for direct API access
     networks:
