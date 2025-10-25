@@ -110,3 +110,64 @@ Open `http://localhost:8080` for per-container CPU/RAM stats.
 - **Self-service portal** – upgrade the frontend to a full React/Next.js app with OAuth login, usage dashboards, and support ticketing.
 
 Contributions are welcome—file issues or submit PRs with improvements, bug fixes, or additional desktop images.
+
+## Local development & workflow (current)
+
+This section documents the current local development workflow and a few troubleshooting tips so you can reproduce the environment used during testing.
+
+- Start Docker Desktop first (Windows): Docker Compose uses the Docker Desktop WSL2 socket. If `docker` commands fail with a named-pipe error, open Docker Desktop and wait until it reports "Docker Engine running".
+
+- Bring up Traefik and the backend (deploy/ compose lives in `deploy/`):
+
+```powershell
+# from repo root
+docker compose -f deploy/docker-compose-traefik.yml up -d
+```
+
+- Frontend location and mount behavior:
+  - The frontend source is in `Admin Dashboard UI Design/` at the repo root. A production build is output to `Admin Dashboard UI Design/build`.
+  - The Compose file in `deploy/docker-compose-traefik.yml` mounts the host build directory into the backend container at `/app/backend/public` using the repo-root relative path (`../Admin Dashboard UI Design/build`). This is how Traefik ends up serving the static UI.
+  - If you see `Cannot GET /` on `http://localhost`, check that the host build exists and the compose mount is correct (see `docker inspect <backend-container>` and `docker exec <backend-container> ls -la /app/backend/public`).
+
+- Building / serving the frontend for production (served via Traefik):
+
+```powershell
+cd "C:\Users\91798\docker_loadbalancing\Admin Dashboard UI Design"
+npm install
+npm run build
+# restart the backend service so the mount is picked up
+docker compose -f deploy/docker-compose-traefik.yml up -d backend
+```
+
+- Local frontend development (Vite dev server):
+  - The Vite dev server is configured with a proxy for API routes (`/instances`, `/monitor`, `/i` etc) which forwards to `http://localhost` (Traefik). This allows the dev server to call the API and use Traefik dynamic routes for `/i/<instanceId>` without CORS issues.
+
+```powershell
+cd "C:\Users\91798\docker_loadbalancing\Admin Dashboard UI Design"
+npm install
+npm run dev
+```
+
+- API & dynamic instance routing (quick reminders):
+  - API base: backend listens on port 3001 by default. When Traefik is in use, set `USE_TRAEFIK=1` (the Compose file sets this) and the API will create instances with Traefik labels.
+  - Instances are reachable at: `http://localhost/i/<instanceId>` (Traefik strips the `/i/<instanceId>` prefix before forwarding to the container's internal port).
+
+- Git notes:
+  - This repository uses `master` as the active branch in this workspace. If `git push origin main` fails with `src refspec main does not match any`, push `master` instead:
+
+```powershell
+git push origin master
+```
+
+  - If you prefer `main`, rename locally and push:
+
+```powershell
+git branch -m master main
+git push -u origin main
+```
+
+- Troubleshooting tips:
+  - If the backend container doesn't show your static files, ensure the build path exists on the host and the compose mount uses the repo-root relative path: `../Admin Dashboard UI Design/build` (this was a common cause of empty `/app/backend/public`).
+  - Check backend logs with `docker logs <backend-container> --tail 200` and Traefik dashboard at `http://localhost:8080` when debugging routing.
+
+If you'd like, I can add a small README section showing how to commit the frontend source (and what to ignore) and/or convert the compose mount to an environment-variable driven path to make it robust across machines.
