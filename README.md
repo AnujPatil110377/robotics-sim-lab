@@ -170,4 +170,3 @@ git push -u origin main
   - If the backend container doesn't show your static files, ensure the build path exists on the host and the compose mount uses the repo-root relative path: `../Admin Dashboard UI Design/build` (this was a common cause of empty `/app/backend/public`).
   - Check backend logs with `docker logs <backend-container> --tail 200` and Traefik dashboard at `http://localhost:8080` when debugging routing.
 
-If you'd like, I can add a small README section showing how to commit the frontend source (and what to ignore) and/or convert the compose mount to an environment-variable driven path to make it robust across machines.
